@@ -10,7 +10,7 @@ Here's a real-world example of loading the [WPTRT Customize Pro](https://github.
 
 ```php
 // Include the Loader class.
-require_once( get_theme_file_path( 'path/to/wptrt-autoload/src/Loader.php' ) );
+require_once get_theme_file_path( 'path/to/wptrt-autoload/src/Loader.php' );
 
 // Create a new instance of the Loader class.
 $themeslug_loader = new \WPTRT\Autoload\Loader();
