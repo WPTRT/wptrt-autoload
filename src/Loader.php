@@ -35,7 +35,7 @@ class Loader {
 	 */
 	public function add( $prefix, $path, $prepend = false ) {
 
-		$this->loaders[ $prefix ] = [
+		$this->loaders[ $prefix ][ $path ] = [
 			'prefix'  => $prefix,
 			'path'    => $path,
 			'prepend' => $prepend
@@ -48,10 +48,21 @@ class Loader {
 	 * @since  1.0.0
 	 * @access public
 	 * @param  string  $prefix   Namespace prefix.
+	 * @param  string  $path     Absolute path.
 	 * @return void
 	 */
-	public function remove( $prefix ) {
+	public function remove( $prefix, $path = '' ) {
 
+		// Remove specific loader if both the prefix and path are provided.
+		if ( $path ) {
+			if ( $this->has( $prefix, $path ) ) {
+				unset( $this->loaders[ $prefix ][ $path ] );
+			}
+
+			return;
+		}
+
+		// Remove all loaders for a prefix if no path is provided.
 		if ( $this->has( $prefix ) ) {
 			unset( $this->loaders[ $prefix ] );
 		}
@@ -63,9 +74,15 @@ class Loader {
 	 * @since  1.0.0
 	 * @access public
 	 * @param  string  $prefix   Namespace prefix.
+	 * @param  string  $path     Absolute path.
 	 * @return bool
 	 */
-	public function has( $prefix ) {
+	public function has( $prefix, $path = '' ) {
+
+		if ( $path ) {
+			return isset( $this->loaders[ $prefix ] ) && isset( $this->loaders[ $prefix ][ $path ] );
+		}
+
 		return isset( $this->loaders[ $prefix ] );
 	}
 
@@ -78,13 +95,16 @@ class Loader {
 	 */
 	public function register() {
 
-		foreach ( $this->loaders as $loader ) {
+		foreach ( $this->loaders as $collection ) {
 
-			spl_autoload_register( function( $class ) use ( $loader ) {
+			foreach ( $collection as $loader ) {
 
-				$this->load( $class, $loader['prefix'], $loader['path'] );
+				spl_autoload_register( function( $class ) use ( $loader ) {
 
-			}, true, $loader->prepend );
+					$this->load( $class, $loader['prefix'], $loader['path'] );
+
+				}, true, $loader['prepend'] );
+			}
 		}
 	}
 
