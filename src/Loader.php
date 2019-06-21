@@ -134,7 +134,7 @@ class Loader {
 
 		// If the file exists for the class name, load it.
 		if ( file_exists( $file ) ) {
-			include( $file );
+			include $file;
 		}
 	}
 }
