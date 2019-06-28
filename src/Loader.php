@@ -12,6 +12,8 @@
 
 namespace WPTRT\Autoload;
 
+use Exception;
+
 class Loader {
 
 	/**
@@ -22,6 +24,19 @@ class Loader {
 	 * @var    array
 	 */
 	protected $loaders = [];
+
+	/**
+	 * Array of prepend vs. append loaders.
+	 *
+	 * @since  1.1.0
+	 * @access protected
+	 * @var    bool[]
+	 */
+	protected $prepends = array(
+		true  => 0,
+		false => 0,
+	);
+
 
 	/**
 	 * Adds a new prefix and path to load.
@@ -35,11 +50,9 @@ class Loader {
 	 */
 	public function add( $prefix, $path, $prepend = false ) {
 
-		$this->loaders[ $prefix ][ $path ] = [
-			'prefix'  => $prefix,
-			'path'    => $path,
-			'prepend' => $prepend
-		];
+		$this->loaders[ $prefix ][ $path ] = $prepend;
+		$this->prepends[ $prepend ]++;
+
 	}
 
 	/**
@@ -56,6 +69,7 @@ class Loader {
 		// Remove specific loader if both the prefix and path are provided.
 		if ( $path ) {
 			if ( $this->has( $prefix, $path ) ) {
+				$this->prepends[ $this->loaders[ $prefix ][ $path ] ]--;
 				unset( $this->loaders[ $prefix ][ $path ] );
 			}
 
@@ -64,6 +78,10 @@ class Loader {
 
 		// Remove all loaders for a prefix if no path is provided.
 		if ( $this->has( $prefix ) ) {
+			$paths = $this->loaders[ $prefix ];
+			foreach( $paths as $path ) {
+				$this->prepends[ $paths[ $path ] ]--;
+			}
 			unset( $this->loaders[ $prefix ] );
 		}
 	}
@@ -92,20 +110,31 @@ class Loader {
 	 * @since  1.0.0
 	 * @access public
 	 * @return void
+	 * @throw Exception
 	 */
 	public function register() {
 
-		foreach ( $this->loaders as $collection ) {
-
-			foreach ( $collection as $loader ) {
-
-				spl_autoload_register( function( $class ) use ( $loader ) {
-
-					$this->load( $class, $loader['prefix'], $loader['path'] );
-
-				}, true, $loader['prepend'] );
+		foreach( $this->prepends as $prepend => $added ) {
+			if ( 0 === $added ) {
+				continue;
 			}
+			try {
+
+				spl_autoload_register( function( $class ) use ( $prepend ) {
+					if ( 0 < $this->prepends[ $prepend ] ) {
+						$this->load( $class, $prepend );
+					}
+				}, true, $prepend );
+
+			} catch( Exception $e ) {
+
+				error_log( $error = "Error attempting to register autoloader" );
+				trigger_error( $error );
+
+			}
+
 		}
+
 	}
 
 	/**
@@ -114,27 +143,54 @@ class Loader {
 	 * @since  1.0.0
 	 * @access public
 	 * @param  string  $class    Fully-qualified class name.
-	 * @param  string  $prefix   Namespace prefix.
-	 * @param  string  $path     Absolute path where to look for classes.
+	 * @param  bool    $prepend  What this registered at the top or the bottom
 	 * @return void
 	 */
-	protected function load( $class, $prefix, $path ) {
+	protected function load( $class, $prepend ) {
 
-		// Bail if the class is not in our namespace.
-		if ( 0 !== strpos( $class, $prefix ) ) {
-			return;
+		foreach( $this->loaders as $prefix => $paths ) {
+
+			// Continue looking if class is not in our namespace.
+			if ( 0 !== strpos( $class, $prefix ) ) {
+				continue;
+			}
+
+			// Remove the prefix from the class name.
+			$class = ltrim( preg_replace(
+				'#^' . preg_quote( $prefix ) . '#',
+				'',
+				$class
+			), '\\' );
+
+			// Create a class name suffix
+			$class = sprintf( '%s%s.php', DIRECTORY_SEPARATOR, $class );
+
+			foreach( $paths as $path => $is_prepended ) {
+
+				// If the prepends don't match
+				if ( $is_prepended === (bool)$prepend ) {
+					continue;
+				}
+
+				// We have no loaders prepended (if $prepend == true)
+				// or appended (if $prepend == false)
+				if (  0 === $this->prepends[ $prepend ] ) {
+					continue;
+				}
+
+				// The file does not exist, continue looking
+				if ( ! file_exists( $file = realpath( $path ) . $class ) ) {
+					continue;
+				}
+
+				// If the file exists for the class name, load it and exit
+				include $file;
+				return;
+
+			}
+
 		}
 
-		// Remove the prefix from the class name.
-		$class = str_replace( $prefix, '', $class );
-
-		// Build the filename.
-		$file = realpath( $path );
-		$file = $file . DIRECTORY_SEPARATOR . str_replace( '\\', DIRECTORY_SEPARATOR, $class ) . '.php';
-
-		// If the file exists for the class name, load it.
-		if ( file_exists( $file ) ) {
-			include $file;
-		}
 	}
+
 }
