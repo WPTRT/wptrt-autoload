@@ -168,7 +168,7 @@ class Loader {
 			foreach( $paths as $path => $is_prepended ) {
 
 				// If the prepends don't match
-				if ( $is_prepended === (bool)$prepend ) {
+				if ( $is_prepended !== (bool)$prepend ) {
 					continue;
 				}
 
