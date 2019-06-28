@@ -24,6 +24,18 @@ class Loader {
 	protected $loaders = [];
 
 	/**
+	 * Maintains the count of loaders to prepend/append.
+	 *
+	 * @since  1.0.0
+	 * @access protected
+	 * @var    array
+	 */
+	protected $prepends = [
+		true  => 0,
+		false => 0
+	];
+
+	/**
 	 * Adds a new prefix and path to load.
 	 *
 	 * @since  1.0.0
@@ -35,15 +47,13 @@ class Loader {
 	 */
 	public function add( $prefix, $path, $prepend = false ) {
 
-		$this->loaders[ $prefix ][ $path ] = [
-			'prefix'  => $prefix,
-			'path'    => $path,
-			'prepend' => $prepend
-		];
+		$this->loaders[ $prefix ][ $path ] = $prepend;
+
+		$this->prepends[ $prepend ]++;
 	}
 
 	/**
-	 * Removes a loader by prefix.
+	 * Removes a loader by prefix or prefix + path.
 	 *
 	 * @since  1.0.0
 	 * @access public
@@ -56,6 +66,9 @@ class Loader {
 		// Remove specific loader if both the prefix and path are provided.
 		if ( $path ) {
 			if ( $this->has( $prefix, $path ) ) {
+
+				$this->prepends[ $this->loaders[ $prefix ][ $path ] ]--;
+
 				unset( $this->loaders[ $prefix ][ $path ] );
 			}
 
@@ -64,6 +77,11 @@ class Loader {
 
 		// Remove all loaders for a prefix if no path is provided.
 		if ( $this->has( $prefix ) ) {
+
+			foreach ( $this->loaders[ $prefix ] as $path ) {
+				$this->prepends[ $this->loaders[ $prefix ][ $path ] ]--;
+			}
+
 			unset( $this->loaders[ $prefix ] );
 		}
 	}
@@ -95,15 +113,16 @@ class Loader {
 	 */
 	public function register() {
 
-		foreach ( $this->loaders as $collection ) {
+		foreach ( $this->prepends as $prepend => $count ) {
 
-			foreach ( $collection as $loader ) {
+			// Only register if there is at least one loader.
+			if ( 0 < $count ) {
 
-				spl_autoload_register( function( $class ) use ( $loader ) {
+				spl_autoload_register( function( $class ) use ( $prepend ) {
 
-					$this->load( $class, $loader['prefix'], $loader['path'] );
+					$this->load( $class, $prepend );
 
-				}, true, $loader['prepend'] );
+				}, true, $prepend );
 			}
 		}
 	}
@@ -112,29 +131,39 @@ class Loader {
 	 * Loads a class if it's within the given namespace.
 	 *
 	 * @since  1.0.0
-	 * @access public
+	 * @access protected
 	 * @param  string  $class    Fully-qualified class name.
-	 * @param  string  $prefix   Namespace prefix.
-	 * @param  string  $path     Absolute path where to look for classes.
+	 * @param  bool    $prepend  Whether the autoloader is appended/prepended.
 	 * @return void
 	 */
-	protected function load( $class, $prefix, $path ) {
+	protected function load( $class, $prepend ) {
 
-		// Bail if the class is not in our namespace.
-		if ( 0 !== strpos( $class, $prefix ) ) {
-			return;
-		}
+		foreach ( $this->loaders as $prefix => $paths ) {
 
-		// Remove the prefix from the class name.
-		$class = str_replace( $prefix, '', $class );
+			// Continue if the class is not in our namespace.
+			if ( 0 !== strpos( $class, $prefix ) ) {
+				continue;
+			}
 
-		// Build the filename.
-		$file = realpath( $path );
-		$file = $file . DIRECTORY_SEPARATOR . str_replace( '\\', DIRECTORY_SEPARATOR, $class ) . '.php';
+			// Remove the prefix from the class name.
+			$class = ltrim( str_replace( $prefix, '', $class ), '\\' );
+			$class = DIRECTORY_SEPARATOR . str_replace( '\\', DIRECTORY_SEPARATOR, $class ) . '.php';
 
-		// If the file exists for the class name, load it.
-		if ( file_exists( $file ) ) {
-			include $file;
+			// Loop through the paths to see if we can find the file
+			// for the class.
+			foreach ( $paths as $path => $is_prepended ) {
+
+				// Continue if prepends don't match.
+				if ( $is_prepended !== (bool) $prepend ) {
+					continue;
+				}
+
+				// Load the class file if it exists and return.
+				if ( file_exists( $file = realpath( $path ) . $class ) ) {
+					include $file;
+					return;
+				}
+			}
 		}
 	}
 }
