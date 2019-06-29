@@ -4,6 +4,12 @@ A PSR-4 autoloader for WordPress themes.  Primarily, this repository exists for 
 
 Any classes loaded via this autoloader must follow the [PSR-4: Autoloading](https://www.php-fig.org/psr/psr-4/) standard for naming their namespaces, classes, and directories.
 
+## Composer Preferred
+
+While the WPTRT provides this autoloader, we consider it merely a stepping stone to get theme authors to use a better tool when they're ready.  We strongly recommend that you use [Composer](https://getcomposer.org) instead, which is the industry-standard for dependency management and handles autoloading for you.
+
+We also strongly recommend that you follow the [Composer Autoloader Optimization Guide](https://getcomposer.org/doc/articles/autoloader-optimization.md) for making your class-loading as fast as possible.
+
 ## Usage
 
 Here's a real-world example of loading the [WPTRT Customize Section Button](https://github.com/WPTRT/customize-section-button) package:
