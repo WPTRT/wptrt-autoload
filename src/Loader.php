@@ -28,13 +28,15 @@ class Loader {
 	 *
 	 * @since  1.0.0
 	 * @access public
-	 * @param  string  $prefix   Namespace prefix.
-	 * @param  string  $path     Absolute path where to look for classes.
+	 * @param  string        $prefix   Namespace prefix.
+	 * @param  array|string  $paths    Absolute paths where to look for classes.
 	 * @return void
 	 */
-	public function add( $prefix, $path ) {
+	public function add( $prefix, $paths ) {
 
-		$this->loaders[ $prefix ][] = $path;
+		foreach ( (array) $paths as $path ) {
+			$this->loaders[ $prefix ][] = $path;
+		}
 	}
 
 	/**
