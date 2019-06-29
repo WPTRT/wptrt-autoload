@@ -6,7 +6,7 @@ Any classes loaded via this autoloader must follow the [PSR-4: Autoloading](http
 
 ## Composer Preferred
 
-While the WPTRT provides this autoloader, we consider it merely a stepping stone to get theme authors to use a better tool when they're ready.  We strongly recommend that you use [Composer](https://getcomposer.org) instead, which is the industry-standard for dependency management and handles autoloading for you.
+While the WPTRT provides this autoloader, we consider it merely a stepping stone to get theme authors to use a better tool when they're ready.  We strongly recommend that you use [Composer](https://getcomposer.org) instead, which is the industry standard for dependency management and handles autoloading for you.
 
 We also strongly recommend that you follow the [Composer Autoloader Optimization Guide](https://getcomposer.org/doc/articles/autoloader-optimization.md) for making your class-loading as fast as possible.
 
@@ -37,5 +37,4 @@ $themeslug_loader->add( $prefix, $path, $prepend = false );
 ```
 
 * `$prefix` - This should be the namespace of the project.  Make sure to escape backslashes like `\\` instead of a single `\`.
-* `$path` - This should be the absolute path to the source code of where the classes are housed.
-* `$prepend` - Whether to prepend or append a particular loader to the autoload queue.  `false` by default.
+* `$path` - This should be the absolute path to the source code of where the classes are housed. Can be a `string` for a single path or an array for multiple paths for the given prefix.
