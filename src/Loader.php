@@ -7,7 +7,7 @@
  * @author    WPTRT <themes@wordpress.org>
  * @copyright 2019 WPTRT
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
- * @link      https://github.com/WPTRT/wptrt-autoload
+ * @link      https://github.com/WPTRT/autoload
  */
 
 namespace WPTRT\Autoload;
@@ -29,7 +29,7 @@ class Loader {
 	 * @since  1.0.0
 	 * @access public
 	 * @param  string        $prefix   Namespace prefix.
-	 * @param  array|string  $paths    Absolute paths where to look for classes.
+	 * @param  array|string  $paths    Absolute path(s) where to look for classes.
 	 * @return void
 	 */
 	public function add( $prefix, $paths ) {
@@ -117,7 +117,7 @@ class Loader {
 				continue;
 			}
 
-			// Remove the prefix from the class name.
+			// Build a class filename to append to the path.
 			$suffix = ltrim( str_replace( $prefix, '', $class ), '\\' );
 			$suffix = DIRECTORY_SEPARATOR . str_replace( '\\', DIRECTORY_SEPARATOR, $suffix ) . '.php';
 
