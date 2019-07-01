@@ -33,7 +33,7 @@ $themeslug_loader->register();
 Primarily, theme authors would utilize the `add()` method to add a loader.  You can call `add()` multiple times to register multiple loaders.
 
 ```php
-$themeslug_loader->add( $prefix, $path, $prepend = false );
+$themeslug_loader->add( $prefix, $path );
 ```
 
 * `$prefix` - This should be the namespace of the project.  Make sure to escape backslashes like `\\` instead of a single `\`.
