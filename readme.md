@@ -22,7 +22,7 @@ require_once get_theme_file_path( 'path/to/autoload/src/Loader.php' );
 $themeslug_loader = new \WPTRT\Autoload\Loader();
 
 // Add (one or multiple) namespaces and their paths.
-$themeslug_loader->add( 'WPTRT\\Customize\\Section\\', get_theme_file_path( 'path/to/customize-section-button/src' ) );
+$themeslug_loader->add( 'WPTRT\\Customize\\', get_theme_file_path( 'path/to/customize-section-button/src' ) );
 
 // Register all loaders.
 $themeslug_loader->register();
